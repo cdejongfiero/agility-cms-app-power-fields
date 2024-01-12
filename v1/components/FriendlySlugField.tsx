@@ -60,6 +60,17 @@ const FriendlyURLField = () => {
 	}, [])
 
 	const hasBeenSaved = !!!(contentItem && contentItem?.contentID < 0)
+	const [width, setWidth] = useState<number>(document.body.clientWidth)
+
+	useEffect(() => {
+		const handleResize = () => {
+			setWidth(document.body.clientWidth)
+		}
+		window.addEventListener("resize", handleResize)
+		return () => {
+			window.removeEventListener("resize", handleResize)
+		}
+	}, [])
 
 	return (
 		<div className="flex flex-row items-center justify-between gap-1">
@@ -68,7 +79,7 @@ const FriendlyURLField = () => {
 					type="text"
 					value={fieldValue}
 					trailIcon={hasBeenSaved ? "RefreshIcon" : undefined}
-					trailLabel={hasBeenSaved ? "Re-Generate Slug" : undefined}
+					trailLabel={hasBeenSaved ? (width > 400 ? "Re-Generate Slug" : undefined) : undefined}
 					onChange={(str) => {
 						regenerateSlug(str)
 					}}
