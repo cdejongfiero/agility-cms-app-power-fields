@@ -1,5 +1,5 @@
 import { useAgilityAppSDK, contentItemMethods, setHeight, openAlertModal } from "@agility/app-sdk"
-import { TextInput, Button, FormInputWithAddons } from "@agility/plenum-ui"
+import { FormInputWithAddons } from "@agility/plenum-ui"
 import "@agility/plenum-ui/dist/tailwind.css"
 import { useEffect, useState } from "react"
 
