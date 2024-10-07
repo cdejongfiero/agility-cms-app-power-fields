@@ -84,6 +84,7 @@ const FriendlyURLField = () => {
 					handleChange={(str: string) => {
 						regenerateSlug(str)
 					}}
+					addonOffset={8}
 					addonBTN={{
 						onClick: () => {
 							openAlertModal({
