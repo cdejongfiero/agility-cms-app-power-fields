@@ -1,7 +1,7 @@
-import { useAgilityAppSDK, contentItemMethods, setHeight, openAlertModal } from "@agility/app-sdk"
-import { TextInput, Button, TextInputAddon } from "@agility/plenum-ui"
-import { IconName } from "@agility/plenum-ui/lib/util/DynamicIcons"
+import { useAgilityAppSDK, contentItemMethods, setHeight, openAlertModal, setFocus } from "@agility/app-sdk"
 import { useEffect, useState } from "react"
+import { FormInputWithAddons, INestedInputButtonProps, UnifiedIconName } from "@agility/plenum-ui"
+import { FOCUS_EVENTS, handleFieldFocusEvent } from "@/methods/handleFieldFocusEvent"
 
 const makeFriendlyStr = (s: string): string => {
 	if (!s) return ""
@@ -31,19 +31,21 @@ const FriendlyURLField = () => {
 	const { contentItem, field, fieldValue } = useAgilityAppSDK()
 
 	const [currentTitle, setCurrentTitle] = useState<string>("")
+	const [CTAIcon, setCTAIcon] = useState<UnifiedIconName | undefined>(undefined)
+	const [CTALabel, setCTALabel] = useState<string | undefined>(undefined)
+	const [width, setWidth] = useState<number>(document.body.clientWidth)
 
 	const regenerateSlug = async (title: string) => {
 		const newVal = makeFriendlyStr(title)
 		contentItemMethods.setFieldValue({ name: field?.name, value: newVal })
 	}
+	const hasBeenSaved = !!!(contentItem && contentItem?.contentID < 0)
 
-	useEffect(() => {
-		//listen for changes to the title field
+	const intializeTitleFieldListener = () => {
 		contentItemMethods.addFieldListener({
 			fieldName: "Title",
 			onChange: (t) => {
 				setCurrentTitle(t)
-
 				contentItemMethods?.getContentItem()?.then((ci) => {
 					//only regenerate the slug if the content item is new
 					const isNewContentItem = Boolean((ci?.contentID ?? -1) < 0)
@@ -53,50 +55,89 @@ const FriendlyURLField = () => {
 				})
 			}
 		})
-	}, [])
+	}
+
+	const handleResizeListener: (isCleanup?: boolean) => void = (isCleanup) => {
+		const handleResize = () => setWidth(document.body.clientWidth)
+		if (isCleanup) {
+			window.removeEventListener("resize", handleResize)
+			return
+		} else {
+			window.addEventListener("resize", handleResize)
+			return
+		}
+	}
 
 	useEffect(() => {
 		setHeight({ height: 50 })
+		intializeTitleFieldListener()
+		handleResizeListener()
+		return () => {
+			handleResizeListener(true)
+		}
 	}, [])
-
-	const hasBeenSaved = !!!(contentItem && contentItem?.contentID < 0)
-	const [width, setWidth] = useState<number>(document.body.clientWidth)
 
 	useEffect(() => {
-		const handleResize = () => {
-			setWidth(document.body.clientWidth)
+		if (hasBeenSaved) {
+			setCTAIcon("RefreshIcon")
+			setCTALabel("Re-Generate Slug")
 		}
-		window.addEventListener("resize", handleResize)
-		return () => {
-			window.removeEventListener("resize", handleResize)
+		if (!hasBeenSaved) {
+			setCTAIcon(undefined)
+			setCTALabel(undefined)
 		}
-	}, [])
+		if (hasBeenSaved && width < 400) {
+			setCTALabel(undefined)
+		}
+	}, [hasBeenSaved, width])
 
+	const handleCTAClick = () => {
+		openAlertModal({
+			title: "Re-Generate Slug",
+			message:
+				"By changing the URL you could create broken links. We recommend you add in a URL redirection from the old URL to the new URL. Are you sure you wish to continue?",
+			okButtonText: "Re-Generate",
+			cancelButtonText: "Cancel",
+			iconName: "QuestionMarkCircleIcon",
+			callback: (ok: boolean) => {
+				if (!ok) return
+				regenerateSlug(currentTitle)
+			}
+		})
+	}
+
+	const formInputBTNProps: INestedInputButtonProps = {
+		onClick: handleCTAClick,
+		ctaLabel: CTALabel,
+		icon: {
+			icon: CTAIcon,
+			className: "h-5 w-5 text-gray-400"
+		},
+		align: "right",
+		onFocus: () => {
+			handleFieldFocusEvent({ eventName: FOCUS_EVENTS.FOCUS })
+		},
+		onBlur: () => {
+			handleFieldFocusEvent({ eventName: FOCUS_EVENTS.BLUR })
+		}
+	}
 	return (
 		<div className="flex flex-row items-center justify-between gap-1">
 			<div className="w-full p-1 ">
-				<TextInputAddon
-					type="text"
+				<FormInputWithAddons
+					type={"text"}
 					value={fieldValue}
-					trailIcon={hasBeenSaved ? "RefreshIcon" : undefined}
-					trailLabel={hasBeenSaved ? (width > 400 ? "Re-Generate Slug" : undefined) : undefined}
-					onChange={(str) => {
-						regenerateSlug(str)
+					name={field?.name || ""}
+					handleChange={(value: string) => {
+						regenerateSlug(value)
 					}}
-					onCtaClick={() => {
-						openAlertModal({
-							title: "Re-Generate Slug",
-							message:
-								"By changing the URL you could create broken links. We recommend you add in a URL redirection from the old URL to the new URL. Are you sure you wish to continue?",
-							okButtonText: "Re-Generate",
-							cancelButtonText: "Cancel",
-							iconName: "QuestionMarkCircleIcon",
-							callback: (ok: boolean) => {
-								if (!ok) return
-								regenerateSlug(currentTitle)
-							}
-						})
+					onFocus={() => {
+						handleFieldFocusEvent({ eventName: FOCUS_EVENTS.FOCUS })
 					}}
+					onBlur={() => {
+						handleFieldFocusEvent({ eventName: FOCUS_EVENTS.BLUR })
+					}}
+					addonBTN={formInputBTNProps}
 				/>
 			</div>
 		</div>

@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from "react"
-import { contentItemMethods, useAgilityAppSDK, setHeight, getManagementAPIToken, useResizeHeight } from "@agility/app-sdk"
-import useOnScreen from "../hooks/useOnScreen"
+import React, { useState, useEffect, useRef } from "react"
+import { contentItemMethods, useAgilityAppSDK, getManagementAPIToken, useResizeHeight } from "@agility/app-sdk"
 
 import EditorJS, { OutputData } from "@editorjs/editorjs"
 import Embed from "@editorjs/embed"
@@ -18,17 +17,14 @@ import InlineCode from "@editorjs/inline-code"
 import NestedList from "@editorjs/nested-list"
 import DragDrop from "editorjs-drag-drop"
 import { useCallback } from "react"
+import { FOCUS_EVENTS, handleFieldFocusEvent } from "@/methods/handleFieldFocusEvent"
 
 const BlockEditor = ({ configuration }: { configuration: any }) => {
 	const { initializing, instance, fieldValue } = useAgilityAppSDK()
 
-	const containerRef = useRef<HTMLIFrameElement>(null)
+	const containerRef = useResizeHeight(2)
 	const blockRef = useRef<HTMLIFrameElement>(null)
 	const savedValue = useRef<string | null>(null)
-
-	useResizeHeight({ref: containerRef})
-
-	const isVisible = useOnScreen(containerRef)
 
 	const [token, setToken] = useState()
 
@@ -36,6 +32,7 @@ const BlockEditor = ({ configuration }: { configuration: any }) => {
 
 	// Get the ManagementAPIToken
 	useEffect(() => {
+		console.warn("Getting Management API Token")
 		;(async () => {
 			const token = await getManagementAPIToken()
 			setToken(token)
@@ -44,14 +41,12 @@ const BlockEditor = ({ configuration }: { configuration: any }) => {
 
 	useEffect(() => {
 		//handle changes to the field value from outside the editor
-
 		if (!editor.current) return
 		if (savedValue.current === null) return
 
 		try {
 			const blocks = JSON.parse(fieldValue) as OutputData
 			if (fieldValue !== savedValue.current) {
-	
 				if (!fieldValue || blocks.blocks.length == 0) {
 					editor.current.clear()
 				} else {
@@ -69,7 +64,7 @@ const BlockEditor = ({ configuration }: { configuration: any }) => {
 		if (fieldValue && editor.current) {
 			try {
 				const blocks = JSON.parse(fieldValue) as OutputData
-	
+
 				if (blocks.blocks.length == 0) {
 					editor.current.clear()
 				} else {
@@ -80,8 +75,6 @@ const BlockEditor = ({ configuration }: { configuration: any }) => {
 			}
 		}
 	}, [editor.current, fieldValue])
-
-
 
 	useEffect(() => {
 		//initialize the editor
@@ -129,7 +122,7 @@ const BlockEditor = ({ configuration }: { configuration: any }) => {
 				marker: Marker,
 				delimiter: Delimiter,
 				inlineCode: InlineCode,
-				embed: Embed,
+				embed: Embed
 			},
 			onChange: (e: any) => {
 				editorJS.save().then((v) => {
@@ -168,7 +161,17 @@ const BlockEditor = ({ configuration }: { configuration: any }) => {
 
 	return (
 		<div className="bg-white" ref={containerRef} id="container-element">
-			<div className="mx-20 prose min-h-[400px] pb-14 pt-2" id="editor-elem" ref={blockRef}></div>
+			<div
+				onFocus={() => {
+					handleFieldFocusEvent({ eventName: FOCUS_EVENTS.FOCUS })
+				}}
+				onBlur={() => {
+					handleFieldFocusEvent({ eventName: FOCUS_EVENTS.BLUR })
+				}}
+				className="prose mx-20 min-h-[400px] pb-14 pt-2"
+				id="editor-elem"
+				ref={blockRef}
+			></div>
 		</div>
 	)
 }
