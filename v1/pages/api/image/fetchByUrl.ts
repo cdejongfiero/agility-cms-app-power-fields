@@ -40,7 +40,7 @@ handler.post(async (req: NextApiRequest, res: NextApiResponse) => {
 		});
 
 	} catch (err) {
-		console.log(err)
+		console.error(err)
 		return res.status(500).json({ error: err })
 	}
 })
