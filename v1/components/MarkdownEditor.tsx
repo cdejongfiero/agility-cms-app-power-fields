@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react"
 import SimpleMDE from "react-simplemde-editor"
 
 const MarkdownEditor = () => {
-	const { fieldValue, field } = useAgilityAppSDK()
+	const { fieldValue } = useAgilityAppSDK()
 	const containerRef = useResizeHeight(2)
 
 	const markdownValues = fieldValue
@@ -37,15 +37,9 @@ const MarkdownEditor = () => {
 				value={markdownValues}
 				onChange={onChange}
 				onFocus={() => {
-					if (!field) {
-						return
-					}
 					handleFieldFocusEvent({ eventName: FOCUS_EVENTS.FOCUS })
 				}}
 				onBlur={() => {
-					if (!field) {
-						return
-					}
 					handleFieldFocusEvent({ eventName: FOCUS_EVENTS.BLUR })
 				}}
 			/>
