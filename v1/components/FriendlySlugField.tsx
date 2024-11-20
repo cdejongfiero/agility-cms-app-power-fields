@@ -81,12 +81,11 @@ const FriendlyURLField = () => {
 		if (hasBeenSaved) {
 			setCTAIcon("RefreshIcon")
 			setCTALabel("Re-Generate Slug")
-		}
-		if (!hasBeenSaved) {
+			if (width < 400) {
+				setCTALabel(undefined)
+			}
+		} else {
 			setCTAIcon(undefined)
-			setCTALabel(undefined)
-		}
-		if (hasBeenSaved && width < 400) {
 			setCTALabel(undefined)
 		}
 	}, [hasBeenSaved, width])
