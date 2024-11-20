@@ -86,7 +86,6 @@ const FriendlyURLField = () => {
 			}
 		} else {
 			setCTAIcon(undefined);
-			setCTALabel(undefined);
 		}
 	}, [hasBeenSaved, width]);
 
