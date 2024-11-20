@@ -7,8 +7,9 @@ export enum FOCUS_EVENTS {
 interface IFocusHandlerProps {
 	eventName: FOCUS_EVENTS
 }
+type TFocusHandler = ({ eventName }: IFocusHandlerProps) => void
 
-export const handleFieldFocusEvent: ({ eventName }: IFocusHandlerProps) => void = ({ eventName }) => {
+export const handleFieldFocusEvent: TFocusHandler = ({ eventName }) => {
 	const isFocused = eventName === FOCUS_EVENTS.FOCUS
 	setFocus({ isFocused })
 }
