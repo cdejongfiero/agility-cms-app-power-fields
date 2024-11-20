@@ -2,7 +2,6 @@ import { useAgilityAppSDK, contentItemMethods, setHeight, openAlertModal, setFoc
 import { useEffect, useState } from "react";
 import { FormInputWithAddons, INestedInputButtonProps, UnifiedIconName } from "@agility/plenum-ui";
 import { FOCUS_EVENTS, handleFieldFocusEvent } from "@/methods/handleFieldFocusEvent";
-import { tablerIconNames } from "@agility/plenum-ui/stories/atoms/icons/tablerIconNames";
 
 const makeFriendlyStr = (s: string): string => {
 	if (!s) return "";
