@@ -20,7 +20,7 @@ import { useCallback } from "react"
 import { FOCUS_EVENTS, handleFieldFocusEvent } from "@/methods/handleFieldFocusEvent"
 import ScheduleBlock from "./blocks/ScheduleBlock"
 
-const BlockEditorTest = ({ configuration }: { configuration: any }) => {
+const BlockComposer = ({ configuration }: { configuration: any }) => {
 	const { initializing, instance, fieldValue } = useAgilityAppSDK()
 
 	const containerRef = useResizeHeight(2)
@@ -57,7 +57,7 @@ const BlockEditorTest = ({ configuration }: { configuration: any }) => {
 				}
 			}
 		} catch (e) {
-			console.warn("Error parsing JSON for Block Editor", e)
+			console.warn("Error parsing JSON for Block Composer", e)
 		}
 	}, [fieldValue, editor])
 
@@ -72,7 +72,7 @@ const BlockEditorTest = ({ configuration }: { configuration: any }) => {
 					editor.current.render(blocks)
 				}
 			} catch (e) {
-				console.warn("Error parsing JSON for Block Editor", e)
+				console.warn("Error parsing JSON for Block Composer", e)
 			}
 		}
 	}, [editor.current, fieldValue])
@@ -86,7 +86,7 @@ const BlockEditorTest = ({ configuration }: { configuration: any }) => {
 		const uploadImagePayload = {
 			guid: instance?.guid,
 			token,
-			assetFolder: configuration.assetFolder ?? "/images/block-editor"
+			assetFolder: configuration.assetFolder ?? "/images/block-composer"
 		}
 
 		const editorJS = new EditorJS({
@@ -178,4 +178,4 @@ const BlockEditorTest = ({ configuration }: { configuration: any }) => {
 	)
 }
 
-export default BlockEditorTest
+export default BlockComposer

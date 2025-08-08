@@ -1,32 +1,32 @@
 {
-	"name": "Power Fields",
-	"documentationLink": "https://agilitycms.com/docs/apps/power-fields",
-	"description": "Power Fields App - containing multiple different custom fields. Markdown Editor, Block Editor and Friendly URL slug Generator",
+	"name": "Fiero Editorjs Blocks",
+	"documentationLink": "https://github.com/connordejong/fiero-editorjs-blocks",
+	"description": "Fiero Editorjs Blocks - Custom Editor.js blocks including Schedule Block, enhanced markdown editing, and slug generation",
 	"__sdkVersion": "2.0.0",
 	"configValuesBAK": [
 		{
 			"name": "assetFolder",
-			"label": "Asset Upload Folder Path (i.e. 'images/block-editor')",
+			"label": "Asset Upload Folder Path (i.e. 'images/block-composer')",
 			"type": "string",
-			"description": "Config value needed for the block editor"
+			"description": "Config value needed for the block composer"
 		}
 	],
 	"capabilities": {
 		"fields": [
 			{
-				"label": "Block Editor Test",
-      		"name": "BlockEditorJSON",
-				"description": "A block editor that can replace the rich text editor field."
+				"label": "Block Composer",
+      		"name": "BlockComposer",
+				"description": "Advanced Editor.js block composer with custom Schedule blocks and enhanced editing capabilities."
 			},
 			{
-				"label": "Markdown Editor",
-				"name": "Markdown",
-				"description": "A markdown editor."
+				"label": "Markdown Enhanced",
+				"name": "MarkdownEnhanced",
+				"description": "Enhanced markdown editor with advanced formatting and preview capabilities."
 			},
 			{
-				"label": "Friendly URL",
-				"name": "FriendlyURL",
-				"description": "A slug field for friendly URLs."
+				"label": "Slug",
+				"name": "Slug",
+				"description": "Intelligent slug generator for SEO-friendly URLs."
 			}
 		]
 	}
