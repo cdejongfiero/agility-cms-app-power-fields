@@ -1,7 +1,7 @@
 {
 	"name": "Fiero Editorjs Blocks",
 	"documentationLink": "https://github.com/connordejong/fiero-editorjs-blocks",
-	"description": "Fiero Editorjs Blocks - Custom Editor.js blocks including Schedule Block, enhanced markdown editing, and slug generation",
+	"description": "Fiero Editorjs Blocks - Custom Editor.js blocks including Schedule Block, Recipe tools, and enhanced editing capabilities",
 	"__sdkVersion": "2.0.0",
 	"configValuesBAK": [
 		{
@@ -16,7 +16,22 @@
 			{
 				"label": "Block Composer",
       		"name": "BlockComposer",
-				"description": "Advanced Editor.js block composer with custom Schedule blocks and enhanced editing capabilities."
+				"description": "General purpose Editor.js with all blocks: Schedule, Recipe tools, Image Gallery, and standard editing blocks."
+			},
+			{
+				"label": "Recipe Ingredients",
+				"name": "RecipeIngredientsComposer",
+				"description": "Dedicated ingredient table editor with units, quantities, and servings calculator."
+			},
+			{
+				"label": "Recipe Instructions",
+				"name": "RecipeInstructionsComposer",
+				"description": "Step-by-step cooking instructions editor with timing and temperature controls."
+			},
+			{
+				"label": "Workshop Schedule",
+				"name": "WorkshopScheduleComposer",
+				"description": "Multi-day schedule editor with export/import and activity management."
 			},
 			{
 				"label": "Markdown Enhanced",
