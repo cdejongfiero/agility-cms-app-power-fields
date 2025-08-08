@@ -19,6 +19,9 @@ import DragDrop from "editorjs-drag-drop"
 import { useCallback } from "react"
 import { FOCUS_EVENTS, handleFieldFocusEvent } from "@/methods/handleFieldFocusEvent"
 import ScheduleBlock from "./blocks/ScheduleBlock"
+import RecipeInstructionBlock from "./blocks/RecipeInstructionBlock"
+import RecipeIngredientBlock from "./blocks/RecipeIngredientBlock"
+import AgilityImageBlock from "./blocks/AgilityImageBlock"
 
 const BlockComposer = ({ configuration }: { configuration: any }) => {
 	const { initializing, instance, fieldValue } = useAgilityAppSDK()
@@ -124,7 +127,10 @@ const BlockComposer = ({ configuration }: { configuration: any }) => {
 				delimiter: Delimiter,
 				inlineCode: InlineCode,
 				embed: Embed,
-				schedule: ScheduleBlock
+				schedule: ScheduleBlock,
+				recipeInstruction: RecipeInstructionBlock,
+				recipeIngredient: RecipeIngredientBlock,
+				imageGallery: AgilityImageBlock
 			},
 			onChange: (e: any) => {
 				editorJS.save().then((v) => {
