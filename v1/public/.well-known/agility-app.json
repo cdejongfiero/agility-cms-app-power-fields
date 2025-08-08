@@ -14,7 +14,7 @@
 	"capabilities": {
 		"fields": [
 			{
-				"label": "Block Editor",
+				"label": "Block Editor Test",
       		"name": "BlockEditorJSON",
 				"description": "A block editor that can replace the rich text editor field."
 			},

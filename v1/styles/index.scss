@@ -14,3 +14,31 @@ body {
 .codex-editor__redactor {
   padding-bottom: 0 !important;
 }
+
+/* Schedule Block Styles */
+.schedule-block [contentEditable="true"][data-placeholder]::before {
+  position: absolute;
+  content: attr(data-placeholder);
+  color: #a0a0a0;
+  font-weight: normal;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.schedule-block [contentEditable="true"][data-placeholder]:empty::before {
+  opacity: 1;
+}
+
+.schedule-block [contentEditable="true"][data-placeholder]:empty:focus::before {
+  opacity: 0;
+}
+
+.schedule-block [contentEditable="true"] {
+  position: relative;
+}
+
+.schedule-block [contentEditable="true"]:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+  border-radius: 4px;
+}

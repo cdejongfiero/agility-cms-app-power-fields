@@ -18,8 +18,9 @@ import NestedList from "@editorjs/nested-list"
 import DragDrop from "editorjs-drag-drop"
 import { useCallback } from "react"
 import { FOCUS_EVENTS, handleFieldFocusEvent } from "@/methods/handleFieldFocusEvent"
+import ScheduleBlock from "./blocks/ScheduleBlock"
 
-const BlockEditor = ({ configuration }: { configuration: any }) => {
+const BlockEditorTest = ({ configuration }: { configuration: any }) => {
 	const { initializing, instance, fieldValue } = useAgilityAppSDK()
 
 	const containerRef = useResizeHeight(2)
@@ -122,7 +123,8 @@ const BlockEditor = ({ configuration }: { configuration: any }) => {
 				marker: Marker,
 				delimiter: Delimiter,
 				inlineCode: InlineCode,
-				embed: Embed
+				embed: Embed,
+				schedule: ScheduleBlock
 			},
 			onChange: (e: any) => {
 				editorJS.save().then((v) => {
@@ -176,4 +178,4 @@ const BlockEditor = ({ configuration }: { configuration: any }) => {
 	)
 }
 
-export default BlockEditor
+export default BlockEditorTest
