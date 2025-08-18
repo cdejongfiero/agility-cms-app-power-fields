@@ -504,6 +504,512 @@ Once Recipe Ingredients works:
 
 ---
 
+## 📚 **Developer Guide: Adding Custom Blocks & Fields**
+
+### **🧩 How to Add a Custom Block**
+
+Follow these steps to add a new custom Editor.js block to the Fiero Editorjs Blocks app:
+
+#### **Step 1: Create the Block File**
+Create `/components/blocks/YourCustomBlock.ts`:
+
+```typescript
+import type { API, BlockTool, BlockToolData, ToolboxConfig } from '@editorjs/editorjs';
+
+export interface YourCustomBlockData extends BlockToolData {
+  // Define your block's data structure
+  title: string;
+  content: string;
+  // Add other properties as needed
+}
+
+export interface YourCustomBlockConfig {
+  // Configuration options for your block
+  placeholder?: string;
+  maxItems?: number;
+}
+
+interface YourCustomBlockConstructorArgs {
+  data: YourCustomBlockData;
+  config?: YourCustomBlockConfig;
+  api: API;
+  readOnly: boolean;
+}
+
+export default class YourCustomBlock implements BlockTool {
+  private api: API;
+  private data: YourCustomBlockData;
+  private readOnly: boolean;
+  private config: YourCustomBlockConfig;
+
+  static get toolbox(): ToolboxConfig {
+    return {
+      title: 'Your Custom Block',
+      icon: '<svg>...</svg>' // Your SVG icon
+    };
+  }
+
+  static get isReadOnlySupported(): boolean {
+    return true;
+  }
+
+  constructor({ data, config, api, readOnly }: YourCustomBlockConstructorArgs) {
+    this.api = api;
+    this.readOnly = readOnly;
+    this.config = config || {};
+    
+    this.data = {
+      title: data.title || '',
+      content: data.content || ''
+    };
+  }
+
+  render(): HTMLElement {
+    const wrapper = this._make('div', ['your-custom-block']);
+    
+    const title = this._make('div', ['your-custom-block__title'], {
+      contentEditable: (!this.readOnly).toString(),
+      innerHTML: this.data.title
+    });
+    title.dataset.placeholder = this.config.placeholder || 'Enter title...';
+    
+    // Add more elements as needed
+    wrapper.appendChild(title);
+    
+    if (!this.readOnly) {
+      this._attachEventListeners(wrapper);
+    }
+    
+    return wrapper;
+  }
+
+  save(blockContent: HTMLElement): YourCustomBlockData {
+    const title = blockContent.querySelector('.your-custom-block__title');
+    
+    return {
+      title: title?.innerHTML ?? '',
+      content: '' // Extract other data from DOM
+    };
+  }
+
+  validate(data: YourCustomBlockData): boolean {
+    return data.title.trim() !== '';
+  }
+
+  private _attachEventListeners(wrapper: HTMLElement): void {
+    // Add event listeners for interactive features
+  }
+
+  private _make<K extends keyof HTMLElementTagNameMap>(
+    tagName: K,
+    classNames: string | string[] | null = null,
+    attributes: { [key: string]: any } = {}
+  ): HTMLElementTagNameMap[K] {
+    const el = document.createElement(tagName);
+
+    if (Array.isArray(classNames)) {
+      el.classList.add(...classNames);
+    } else if (classNames) {
+      el.classList.add(classNames);
+    }
+
+    for (const attrName in attributes) {
+      (el as any)[attrName] = attributes[attrName];
+    }
+
+    return el;
+  }
+
+  static get sanitize() {
+    return {
+      title: { b: true, i: true, strong: true, em: true },
+      content: { p: true, br: true }
+    };
+  }
+}
+```
+
+#### **Step 2: Add CSS Styling**
+Add styles to `/styles/index.scss`:
+
+```scss
+/* Your Custom Block Styles */
+.your-custom-block {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  background: #fff;
+}
+
+.your-custom-block__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  min-height: 24px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.your-custom-block [contentEditable="true"][data-placeholder]::before {
+  position: absolute;
+  content: attr(data-placeholder);
+  color: #a0a0a0;
+  font-weight: normal;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.your-custom-block [contentEditable="true"][data-placeholder]:empty::before {
+  opacity: 1;
+}
+
+.your-custom-block [contentEditable="true"][data-placeholder]:empty:focus::before {
+  opacity: 0;
+}
+
+.your-custom-block [contentEditable="true"] {
+  position: relative;
+}
+```
+
+#### **Step 3: Import and Add to BlockComposer**
+Update `/components/BlockComposer.tsx`:
+
+```typescript
+// Add import
+import YourCustomBlock from "./blocks/YourCustomBlock"
+
+// Add to tools configuration
+tools: {
+  // ... existing tools
+  yourCustomBlock: YourCustomBlock
+}
+```
+
+#### **Step 4: Test Your Block**
+1. Restart your development server: `npm run dev`
+2. Open BlockComposer in Agility CMS
+3. Look for "Your Custom Block" in the toolbox
+4. Test adding, editing, and saving content
+
+---
+
+### **🎯 How to Add a Custom Field**
+
+Add a completely new field type to your app:
+
+#### **Step 1: Update App Configuration**
+Add to `/public/.well-known/agility-app.json`:
+
+```json
+{
+  "capabilities": {
+    "fields": [
+      // ... existing fields
+      {
+        "label": "Your Custom Field",
+        "name": "YourCustomField",
+        "description": "Description of what this field does"
+      }
+    ]
+  }
+}
+```
+
+#### **Step 2: Create Field Page**
+Create `/pages/fields/YourCustomField.tsx`:
+
+```tsx
+import { useAgilityAppSDK } from "@agility/app-sdk"
+import dynamic from "next/dynamic"
+
+const YourCustomField = dynamic(() => import("../../components/YourCustomField"), { ssr: false })
+
+export default function YourCustomFieldPage() {
+  const { initializing, appInstallContext } = useAgilityAppSDK()
+  if (initializing) return null
+  return <YourCustomField configuration={appInstallContext?.configuration} />
+}
+```
+
+#### **Step 3: Create Field Component**
+Create `/components/YourCustomField.tsx`:
+
+```tsx
+import React, { useState, useEffect } from "react"
+import { contentItemMethods, useAgilityAppSDK, useResizeHeight } from "@agility/app-sdk"
+import { FOCUS_EVENTS, handleFieldFocusEvent } from "@/methods/handleFieldFocusEvent"
+
+const YourCustomField = ({ configuration }: { configuration: any }) => {
+  const { fieldValue } = useAgilityAppSDK()
+  const containerRef = useResizeHeight(2)
+  const [value, setValue] = useState(fieldValue || '')
+
+  const handleChange = (newValue: string) => {
+    setValue(newValue)
+    contentItemMethods.setFieldValue({ value: newValue })
+  }
+
+  return (
+    <div className="bg-white" ref={containerRef}>
+      <div
+        onFocus={() => handleFieldFocusEvent({ eventName: FOCUS_EVENTS.FOCUS })}
+        onBlur={() => handleFieldFocusEvent({ eventName: FOCUS_EVENTS.BLUR })}
+        className="p-4"
+      >
+        {/* Your custom field UI here */}
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => handleChange(e.target.value)}
+          placeholder="Enter your custom content..."
+          className="w-full p-2 border border-gray-300 rounded"
+        />
+      </div>
+    </div>
+  )
+}
+
+export default YourCustomField
+```
+
+#### **Step 4: Test Your Field**
+1. Restart development server
+2. Deploy/update your app in Agility CMS
+3. Add "Your Custom Field" to a content model
+4. Test creating and editing content
+
+---
+
+### **⚙️ How to Add a Custom Editor Field (With Specific Blocks)**
+
+Create a specialized Editor.js field that only includes specific blocks:
+
+#### **Step 1: Follow Custom Field Steps 1-2**
+- Update `agility-app.json`
+- Create field page file
+
+#### **Step 2: Create Specialized Editor Component**
+Create `/components/YourSpecializedEditor.tsx`:
+
+```tsx
+import React, { useState, useEffect, useRef } from "react"
+import { contentItemMethods, useAgilityAppSDK, getManagementAPIToken, useResizeHeight } from "@agility/app-sdk"
+import EditorJS, { OutputData } from "@editorjs/editorjs"
+import Paragraph from "@editorjs/paragraph"
+import Header from "@editorjs/header"
+import NestedList from "@editorjs/nested-list"
+import DragDrop from "editorjs-drag-drop"
+import { useCallback } from "react"
+import { FOCUS_EVENTS, handleFieldFocusEvent } from "@/methods/handleFieldFocusEvent"
+
+// Import the blocks you want to include
+import YourCustomBlock from "./blocks/YourCustomBlock"
+import RecipeIngredientBlock from "./blocks/RecipeIngredientBlock"
+import ScheduleBlock from "./blocks/ScheduleBlock"
+
+const YourSpecializedEditor = ({ configuration }: { configuration: any }) => {
+  const { initializing, instance, fieldValue } = useAgilityAppSDK()
+  const containerRef = useResizeHeight(2)
+  const blockRef = useRef<HTMLDivElement>(null)
+  const savedValue = useRef<string | null>(null)
+  const [token, setToken] = useState()
+  const editor = useRef<EditorJS | null>(null)
+
+  // Standard Agility SDK setup
+  useEffect(() => {
+    console.warn("Getting Management API Token")
+    ;(async () => {
+      const token = await getManagementAPIToken()
+      setToken(token)
+    })()
+  }, [])
+
+  useEffect(() => {
+    if (!editor.current) return
+    if (savedValue.current === null) return
+
+    try {
+      const blocks = JSON.parse(fieldValue) as OutputData
+      if (fieldValue !== savedValue.current) {
+        if (!fieldValue || blocks.blocks.length == 0) {
+          editor.current.clear()
+        } else {
+          if (blocks) {
+            editor.current.render(blocks)
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Error parsing JSON for Your Specialized Editor", e)
+    }
+  }, [fieldValue, editor])
+
+  const initEditor = useCallback(() => {
+    if (fieldValue && editor.current) {
+      try {
+        const blocks = JSON.parse(fieldValue) as OutputData
+        if (blocks.blocks.length == 0) {
+          editor.current.clear()
+        } else {
+          editor.current.render(blocks)
+        }
+      } catch (e) {
+        console.warn("Error parsing JSON for Your Specialized Editor", e)
+      }
+    }
+  }, [editor.current, fieldValue])
+
+  useEffect(() => {
+    if (!blockRef.current || !token || initializing) return
+    if (editor.current) return
+
+    const editorJS = new EditorJS({
+      autofocus: false,
+      holder: blockRef.current,
+      placeholder: "🎯 Create content with your specialized tools...",
+      inlineToolbar: true,
+
+      tools: {
+        // Choose exactly which blocks to include
+        
+        // Standard Editor.js blocks
+        paragraph: {
+          class: Paragraph,
+          inlineToolbar: true
+        },
+        header: Header,
+        list: {
+          class: NestedList,
+          inlineToolbar: true
+        },
+        
+        // Your custom blocks
+        yourCustomBlock: YourCustomBlock,
+        recipeIngredient: RecipeIngredientBlock,
+        schedule: ScheduleBlock
+        
+        // Note: Exclude blocks you don't want
+        // No: table, code, image, etc.
+      },
+      
+      onChange: (e: any) => {
+        editorJS.save().then((v) => {
+          delete v.time
+          delete v.version
+          const valueJSON = JSON.stringify(v)
+          if (valueJSON !== fieldValue) {
+            savedValue.current = valueJSON
+            contentItemMethods.setFieldValue({ value: valueJSON })
+          }
+        })
+      },
+      
+      onReady: () => {
+        new DragDrop(editorJS)
+        initEditor()
+      }
+    })
+
+    editor.current = editorJS
+  }, [blockRef, initializing, token])
+
+  return (
+    <div className="bg-white" ref={containerRef} id="container-element">
+      <div
+        onFocus={() => handleFieldFocusEvent({ eventName: FOCUS_EVENTS.FOCUS })}
+        onBlur={() => handleFieldFocusEvent({ eventName: FOCUS_EVENTS.BLUR })}
+        className="prose mx-20 min-h-[400px] pb-14 pt-2"
+        id="editor-elem"
+        ref={blockRef}
+      ></div>
+    </div>
+  )
+}
+
+export default YourSpecializedEditor
+```
+
+#### **Step 3: Test Your Specialized Editor**
+1. Deploy your app
+2. Add your specialized editor field to a content model
+3. Verify only your chosen blocks appear in the toolbox
+4. Test that all blocks work correctly
+
+---
+
+### **🔧 Common Patterns & Tips**
+
+#### **Block Development Tips:**
+- **DOM is Source of Truth**: Always extract data from DOM in `save()` method
+- **Use ContentEditable**: Not form inputs for better Editor.js integration
+- **Implement Validation**: Add `validate()` method for data integrity
+- **Support Read-Only**: Check `this.readOnly` in all interactive elements
+- **Add Placeholders**: Use `data-placeholder` attributes with CSS
+
+#### **Field Development Tips:**
+- **Use Agility SDK**: `useAgilityAppSDK()`, `useResizeHeight()`, `contentItemMethods`
+- **Handle Focus Events**: Implement proper focus/blur event handling
+- **Error Handling**: Wrap JSON parsing in try/catch blocks
+- **Dynamic Imports**: Use `dynamic()` for SSR compatibility
+- **Token Management**: Get management API token for uploads/assets
+
+#### **Editor Configuration Patterns:**
+
+**Minimal Editor** (single block type):
+```typescript
+tools: {
+  yourBlock: YourCustomBlock,
+  paragraph: { class: Paragraph, inlineToolbar: true }
+}
+```
+
+**Content-Focused Editor** (text + custom blocks):
+```typescript
+tools: {
+  paragraph: { class: Paragraph, inlineToolbar: true },
+  header: Header,
+  list: { class: NestedList, inlineToolbar: true },
+  yourCustomBlock: YourCustomBlock
+}
+```
+
+**Media-Rich Editor** (all block types):
+```typescript
+tools: {
+  paragraph: { class: Paragraph, inlineToolbar: true },
+  header: Header,
+  list: { class: NestedList, inlineToolbar: true },
+  table: Table,
+  code: Code,
+  image: { class: Image, config: {...} },
+  yourCustomBlock: YourCustomBlock
+}
+```
+
+#### **File Organization:**
+```
+/components/
+  /blocks/           # Custom block implementations
+    YourBlock.ts
+  YourEditor.tsx     # Editor field components
+  
+/pages/fields/       # Field page routes
+  YourEditor.tsx
+  
+/styles/
+  index.scss         # Block styling
+  
+/public/.well-known/
+  agility-app.json   # App configuration
+```
+
+This guide covers all the patterns you need to extend the Fiero Editorjs Blocks app with your own custom blocks and fields! 🚀
+
+---
+
 ## 🎉 **Conclusion**
 
 **Migration Status: MAJOR SUCCESS** ✅

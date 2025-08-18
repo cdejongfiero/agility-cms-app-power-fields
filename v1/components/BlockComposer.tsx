@@ -22,6 +22,7 @@ import ScheduleBlock from "./blocks/ScheduleBlock"
 import RecipeInstructionBlock from "./blocks/RecipeInstructionBlock"
 import RecipeIngredientBlock from "./blocks/RecipeIngredientBlock"
 import AgilityImageBlock from "./blocks/AgilityImageBlock"
+import { initializeEditorSDK, cleanupEditorSDK } from "../utils/editorSDK"
 
 const BlockComposer = ({ configuration }: { configuration: any }) => {
 	const { initializing, instance, fieldValue } = useAgilityAppSDK()
@@ -145,26 +146,21 @@ const BlockComposer = ({ configuration }: { configuration: any }) => {
 				})
 			},
 			onReady: () => {
-				// const blockSizeElm = document.querySelector<HTMLElement>("#container-element")
-				// if (blockSizeElm) {
-				// 	const observer = new ResizeObserver((entries) => {
-				// 		const entry = entries[0]
-				// 		if (!entry) return
-				// 		let height = entry.contentRect.height + 50
-				// 		if (height < 400) height = 400
+			// Initialize SDK utilities for blocks to use
+			initializeEditorSDK()
 
-				// 		setHeight({ height })
-				// 	})
-				// 	observer.observe(blockSizeElm)
-				// }
+			new DragDrop(editorJS)
 
-				new DragDrop(editorJS)
-
-				initEditor()
+			initEditor()
 			}
 		})
 
 		editor.current = editorJS
+
+		// Cleanup on unmount
+		return () => {
+			cleanupEditorSDK()
+		}
 	}, [blockRef, initializing, token])
 
 	return (
