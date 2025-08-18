@@ -3,16 +3,8 @@
  * This makes SDK functions available on the window object for blocks to use
  */
 
-import React from 'react';
-import { assetsMethods, openModal, closeModal } from '@agility/app-sdk';
+import { assetsMethods } from '@agility/app-sdk';
 import type { IAssetItem } from '@agility/app-sdk';
-
-// Define modal param type to match app-sdk
-type ModalParam<T = any> = {
-  title: string;
-  content: React.ReactNode;
-  onClose?: (result?: T) => void;
-};
 
 // Extract selectAssets from assetsMethods
 const { selectAssets } = assetsMethods;
@@ -24,8 +16,6 @@ declare global {
       singleSelectOnly: boolean;
       callback: (assets: IAssetItem[]) => void;
     }) => void;
-    openModal?: <T>(params: ModalParam<T>) => void;
-    closeModal?: (props: any) => void;
   }
 }
 
@@ -38,10 +28,6 @@ export function initializeEditorSDK(): void {
     // Expose asset selection
     window.selectAssets = selectAssets;
     
-    // Expose modal functions
-    window.openModal = openModal;
-    window.closeModal = closeModal;
-    
     console.log('Editor SDK utilities initialized');
   }
 }
@@ -52,8 +38,6 @@ export function initializeEditorSDK(): void {
 export function cleanupEditorSDK(): void {
   if (typeof window !== 'undefined') {
     delete window.selectAssets;
-    delete window.openModal;
-    delete window.closeModal;
     
     console.log('Editor SDK utilities cleaned up');
   }
@@ -64,6 +48,5 @@ export function cleanupEditorSDK(): void {
  */
 export function isSDKAvailable(): boolean {
   return typeof window !== 'undefined' && 
-         typeof window.selectAssets === 'function' &&
-         typeof window.openModal === 'function';
+         typeof window.selectAssets === 'function';
 }
