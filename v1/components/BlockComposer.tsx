@@ -21,7 +21,8 @@ import { FOCUS_EVENTS, handleFieldFocusEvent } from "@/methods/handleFieldFocusE
 import ScheduleBlock from "./blocks/ScheduleBlock"
 import RecipeInstructionBlock from "./blocks/RecipeInstructionBlock"
 import RecipeIngredientBlock from "./blocks/RecipeIngredientBlock"
-import AgilityImageBlock from "./blocks/AgilityImageBlock"
+import SingleImageBlock from "./blocks/SingleImageBlock"
+import ImageGalleryBlock from "./blocks/ImageGalleryBlock"
 import { initializeEditorSDK, cleanupEditorSDK } from "../utils/editorSDK"
 
 const BlockComposer = ({ configuration }: { configuration: any }) => {
@@ -131,7 +132,8 @@ const BlockComposer = ({ configuration }: { configuration: any }) => {
 				schedule: ScheduleBlock,
 				recipeInstruction: RecipeInstructionBlock,
 				recipeIngredient: RecipeIngredientBlock,
-				imageGallery: AgilityImageBlock
+				singleImage: SingleImageBlock,
+				imageGallery: ImageGalleryBlock
 			},
 			onChange: (e: any) => {
 				editorJS.save().then((v) => {
