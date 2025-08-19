@@ -29,6 +29,7 @@ export default class SingleImageBlock implements BlockTool {
   private data: SingleImageData;
   private readOnly: boolean;
   private config: SingleImageConfig;
+  private wrapper: HTMLElement | null = null; // Store reference to this block's wrapper
 
   static get toolbox(): ToolboxConfig {
     return {
@@ -58,6 +59,7 @@ export default class SingleImageBlock implements BlockTool {
 
   render(): HTMLElement {
     const wrapper = this._make('div', ['single-image-block']);
+    this.wrapper = wrapper; // Store reference to this block's wrapper
     
     // Controls section (only in edit mode)
     if (!this.readOnly) {
@@ -163,15 +165,14 @@ export default class SingleImageBlock implements BlockTool {
       fileName: asset.FileName
     };
     
-    // Re-render image
-    const wrapper = document.querySelector('.single-image-block');
-    if (wrapper) {
-      const imageContainer = wrapper.querySelector('.single-image-block__container');
+    // Re-render image using this block's wrapper
+    if (this.wrapper) {
+      const imageContainer = this.wrapper.querySelector('.single-image-block__container');
       if (imageContainer) {
         this._renderImage(imageContainer as HTMLElement);
         
         // Update button text
-        const selectButton = wrapper.querySelector('.single-image-block__select-btn');
+        const selectButton = this.wrapper.querySelector('.single-image-block__select-btn');
         if (selectButton) {
           selectButton.innerHTML = '🖼️ Replace Image';
         }
@@ -244,15 +245,14 @@ export default class SingleImageBlock implements BlockTool {
   private _removeImage(): void {
     this.data.image = undefined;
     
-    // Re-render
-    const wrapper = document.querySelector('.single-image-block');
-    if (wrapper) {
-      const imageContainer = wrapper.querySelector('.single-image-block__container');
+    // Re-render using this block's wrapper
+    if (this.wrapper) {
+      const imageContainer = this.wrapper.querySelector('.single-image-block__container');
       if (imageContainer) {
         this._renderImage(imageContainer as HTMLElement);
         
         // Update button text
-        const selectButton = wrapper.querySelector('.single-image-block__select-btn');
+        const selectButton = this.wrapper.querySelector('.single-image-block__select-btn');
         if (selectButton) {
           selectButton.innerHTML = '🖼️ Select Image';
         }

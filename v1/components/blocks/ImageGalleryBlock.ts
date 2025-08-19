@@ -33,6 +33,7 @@ export default class ImageGalleryBlock implements BlockTool {
   private data: ImageGalleryData;
   private readOnly: boolean;
   private config: ImageGalleryConfig;
+  private wrapper: HTMLElement | null = null; // Store reference to this block's wrapper
 
   static get toolbox(): ToolboxConfig {
     return {
@@ -69,6 +70,7 @@ export default class ImageGalleryBlock implements BlockTool {
 
   render(): HTMLElement {
     const wrapper = this._make('div', ['image-gallery-block']);
+    this.wrapper = wrapper; // Store reference to this block's wrapper
     
     // Controls section (only in edit mode)
     if (!this.readOnly) {
@@ -219,16 +221,15 @@ export default class ImageGalleryBlock implements BlockTool {
     const maxImages = this.config.maxImages || 20;
     this.data.images = [...this.data.images, ...newImages].slice(0, maxImages);
     
-    // Re-render images
-    const wrapper = document.querySelector('.image-gallery-block');
-    if (wrapper) {
-      const imagesContainer = wrapper.querySelector('.image-gallery-block__images');
+    // Re-render images using this block's wrapper
+    if (this.wrapper) {
+      const imagesContainer = this.wrapper.querySelector('.image-gallery-block__images');
       if (imagesContainer) {
         this._renderImages(imagesContainer as HTMLElement);
-        this._updateGalleryDisplay(wrapper as HTMLElement);
+        this._updateGalleryDisplay(this.wrapper as HTMLElement);
         
         // Update button text
-        const selectButton = wrapper.querySelector('.image-gallery-block__select-btn');
+        const selectButton = this.wrapper.querySelector('.image-gallery-block__select-btn');
         if (selectButton) {
           selectButton.innerHTML = '🖼️ Add More Images';
         }
@@ -460,10 +461,9 @@ export default class ImageGalleryBlock implements BlockTool {
   }
 
   private _updateNavigableDisplay(): void {
-    const wrapper = document.querySelector('.image-gallery-block');
-    if (!wrapper) return;
+    if (!this.wrapper) return;
     
-    const imagesContainer = wrapper.querySelector('.image-gallery-block__images');
+    const imagesContainer = this.wrapper.querySelector('.image-gallery-block__images');
     if (!imagesContainer) return;
     
     // Update active slide
@@ -512,16 +512,15 @@ export default class ImageGalleryBlock implements BlockTool {
       this.data.currentSlide = Math.max(0, this.data.images.length - 1);
     }
     
-    // Re-render
-    const wrapper = document.querySelector('.image-gallery-block');
-    if (wrapper) {
-      const imagesContainer = wrapper.querySelector('.image-gallery-block__images');
+    // Re-render using this block's wrapper
+    if (this.wrapper) {
+      const imagesContainer = this.wrapper.querySelector('.image-gallery-block__images');
       if (imagesContainer) {
         this._renderImages(imagesContainer as HTMLElement);
         
         // Update button text if no images left
         if (this.data.images.length === 0) {
-          const selectButton = wrapper.querySelector('.image-gallery-block__select-btn');
+          const selectButton = this.wrapper.querySelector('.image-gallery-block__select-btn');
           if (selectButton) {
             selectButton.innerHTML = '🖼️ Select Images';
           }

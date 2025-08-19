@@ -23,6 +23,7 @@ import RecipeInstructionBlock from "./blocks/RecipeInstructionBlock"
 import RecipeIngredientBlock from "./blocks/RecipeIngredientBlock"
 import SingleImageBlock from "./blocks/SingleImageBlock"
 import ImageGalleryBlock from "./blocks/ImageGalleryBlock"
+import YouTubeEmbedBlock from "./blocks/YouTubeEmbedBlock"
 import { initializeEditorSDK, cleanupEditorSDK } from "../utils/editorSDK"
 
 const BlockComposer = ({ configuration }: { configuration: any }) => {
@@ -133,7 +134,8 @@ const BlockComposer = ({ configuration }: { configuration: any }) => {
 				recipeInstruction: RecipeInstructionBlock,
 				recipeIngredient: RecipeIngredientBlock,
 				singleImage: SingleImageBlock,
-				imageGallery: ImageGalleryBlock
+				imageGallery: ImageGalleryBlock,
+				youtubeEmbed: YouTubeEmbedBlock
 			},
 			onChange: (e: any) => {
 				editorJS.save().then((v) => {
