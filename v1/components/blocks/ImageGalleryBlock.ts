@@ -11,7 +11,7 @@ export interface ImageGalleryData extends BlockToolData {
   }[];
   showCaptions: boolean;
   layout: 'grid' | 'masonry' | 'carousel' | 'slideshow';
-  currentSlide?: number; // For carousel/slideshow navigation
+  currentSlide: number; // Required for carousel/slideshow navigation
 }
 
 export interface ImageGalleryConfig {
@@ -138,8 +138,9 @@ export default class ImageGalleryBlock implements BlockTool {
     if (this.data.layout === 'carousel' || this.data.layout === 'slideshow') {
       // For navigable galleries, only update caption for current slide
       const currentCaptionInput = blockContent.querySelector('.image-gallery-block__caption') as HTMLInputElement;
-      if (currentCaptionInput && this.data.images[this.data.currentSlide]) {
-        this.data.images[this.data.currentSlide].caption = currentCaptionInput.value;
+      const currentSlide = this.data.currentSlide;
+      if (currentCaptionInput && currentSlide >= 0 && this.data.images[currentSlide]) {
+        this.data.images[currentSlide].caption = currentCaptionInput.value;
       }
     } else {
       // For static galleries, update all visible captions
@@ -156,7 +157,7 @@ export default class ImageGalleryBlock implements BlockTool {
       images: this.data.images,
       showCaptions: captionCheckbox?.checked ?? true,
       layout: layoutSelector?.value as any || 'grid',
-      currentSlide: this.data.currentSlide || 0
+      currentSlide: this.data.currentSlide
     };
   }
 
@@ -274,7 +275,7 @@ export default class ImageGalleryBlock implements BlockTool {
     container.className = `image-gallery-block__images image-gallery-block__images--${this.data.layout}`;
     
     // Ensure currentSlide is within bounds
-    this.data.currentSlide = Math.max(0, Math.min(this.data.currentSlide || 0, this.data.images.length - 1));
+    this.data.currentSlide = Math.max(0, Math.min(this.data.currentSlide, this.data.images.length - 1));
     
     // For carousel and slideshow layouts, add navigation
     if (this.data.layout === 'carousel' || this.data.layout === 'slideshow') {
@@ -432,8 +433,9 @@ export default class ImageGalleryBlock implements BlockTool {
   private _previousSlide(): void {
     if (this.data.images.length <= 1) return;
     
-    this.data.currentSlide = this.data.currentSlide > 0 
-      ? this.data.currentSlide - 1 
+    const currentSlide = this.data.currentSlide;
+    this.data.currentSlide = currentSlide > 0 
+      ? currentSlide - 1 
       : this.data.images.length - 1;
     
     this._updateNavigableDisplay();
@@ -442,8 +444,9 @@ export default class ImageGalleryBlock implements BlockTool {
   private _nextSlide(): void {
     if (this.data.images.length <= 1) return;
     
-    this.data.currentSlide = this.data.currentSlide < this.data.images.length - 1 
-      ? this.data.currentSlide + 1 
+    const currentSlide = this.data.currentSlide;
+    this.data.currentSlide = currentSlide < this.data.images.length - 1 
+      ? currentSlide + 1 
       : 0;
     
     this._updateNavigableDisplay();
@@ -465,20 +468,21 @@ export default class ImageGalleryBlock implements BlockTool {
     
     // Update active slide
     const slides = imagesContainer.querySelectorAll('.image-gallery-block__slide');
+    const currentSlide = this.data.currentSlide;
     slides.forEach((slide, index) => {
-      slide.classList.toggle('image-gallery-block__slide--active', index === this.data.currentSlide);
+      slide.classList.toggle('image-gallery-block__slide--active', index === currentSlide);
     });
     
     // Update indicators
     const indicators = imagesContainer.querySelectorAll('.image-gallery-block__indicator');
     indicators.forEach((indicator, index) => {
-      indicator.classList.toggle('image-gallery-block__indicator--active', index === this.data.currentSlide);
+      indicator.classList.toggle('image-gallery-block__indicator--active', index === currentSlide);
     });
     
     // Update counter
     const counter = imagesContainer.querySelector('.image-gallery-block__counter');
     if (counter) {
-      counter.textContent = `${this.data.currentSlide + 1} / ${this.data.images.length}`;
+      counter.textContent = `${currentSlide + 1} / ${this.data.images.length}`;
     }
     
     // Update caption for current slide
@@ -487,11 +491,11 @@ export default class ImageGalleryBlock implements BlockTool {
     
     if (this.data.showCaptions && this.config.allowCaptions !== false) {
       const activeSlide = imagesContainer.querySelector('.image-gallery-block__slide--active');
-      if (activeSlide) {
+      if (activeSlide && this.data.images[currentSlide]) {
         const captionInput = this._make('input', ['image-gallery-block__caption'], {
           type: 'text',
           placeholder: 'Add a caption...',
-          value: this.data.images[this.data.currentSlide]?.caption || '',
+          value: this.data.images[currentSlide].caption || '',
           disabled: this.readOnly
         });
         activeSlide.appendChild(captionInput);
@@ -503,7 +507,8 @@ export default class ImageGalleryBlock implements BlockTool {
     this.data.images.splice(index, 1);
     
     // Adjust currentSlide if necessary
-    if (this.data.currentSlide >= this.data.images.length) {
+    const currentSlide = this.data.currentSlide;
+    if (currentSlide >= this.data.images.length) {
       this.data.currentSlide = Math.max(0, this.data.images.length - 1);
     }
     
