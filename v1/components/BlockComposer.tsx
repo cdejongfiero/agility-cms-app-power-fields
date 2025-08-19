@@ -24,6 +24,7 @@ import RecipeIngredientBlock from "./blocks/RecipeIngredientBlock"
 import SingleImageBlock from "./blocks/SingleImageBlock"
 import ImageGalleryBlock from "./blocks/ImageGalleryBlock"
 import YouTubeEmbedBlock from "./blocks/YouTubeEmbedBlock"
+import ButtonBlock from "./blocks/ButtonBlock"
 import { initializeEditorSDK, cleanupEditorSDK } from "../utils/editorSDK"
 
 const BlockComposer = ({ configuration }: { configuration: any }) => {
@@ -135,7 +136,8 @@ const BlockComposer = ({ configuration }: { configuration: any }) => {
 				recipeIngredient: RecipeIngredientBlock,
 				singleImage: SingleImageBlock,
 				imageGallery: ImageGalleryBlock,
-				youtubeEmbed: YouTubeEmbedBlock
+				youtubeEmbed: YouTubeEmbedBlock,
+				button: ButtonBlock
 			},
 			onChange: (e: any) => {
 				editorJS.save().then((v) => {
