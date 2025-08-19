@@ -2,25 +2,17 @@ import React, { useState, useEffect, useRef } from "react"
 import { contentItemMethods, useAgilityAppSDK, getManagementAPIToken, useResizeHeight } from "@agility/app-sdk"
 
 import EditorJS, { OutputData } from "@editorjs/editorjs"
-import Embed from "@editorjs/embed"
 import Table from "@editorjs/table"
 import Paragraph from "@editorjs/paragraph"
 import Warning from "@editorjs/warning"
-import Code from "@editorjs/code"
-import Image from "@editorjs/image"
-import Raw from "@editorjs/raw"
 import Header from "@editorjs/header"
 import Quote from "@editorjs/quote"
 import Marker from "@editorjs/marker"
 import Delimiter from "@editorjs/delimiter"
-import InlineCode from "@editorjs/inline-code"
 import NestedList from "@editorjs/nested-list"
 import DragDrop from "editorjs-drag-drop"
 import { useCallback } from "react"
 import { FOCUS_EVENTS, handleFieldFocusEvent } from "@/methods/handleFieldFocusEvent"
-import ScheduleBlock from "./blocks/ScheduleBlock"
-import RecipeInstructionBlock from "./blocks/RecipeInstructionBlock"
-import RecipeIngredientBlock from "./blocks/RecipeIngredientBlock"
 import SingleImageBlock from "./blocks/SingleImageBlock"
 import ImageGalleryBlock from "./blocks/ImageGalleryBlock"
 import YouTubeEmbedBlock from "./blocks/YouTubeEmbedBlock"
@@ -90,12 +82,6 @@ const BlockComposer = ({ configuration }: { configuration: any }) => {
 
 		if (editor.current) return
 
-		const uploadImagePayload = {
-			guid: instance?.guid,
-			token,
-			assetFolder: configuration.assetFolder ?? "/images/block-composer"
-		}
-
 		const editorJS = new EditorJS({
 			autofocus: false, //setting this to true will not do anything because this is in an iframe
 			holder: blockRef.current,
@@ -113,27 +99,10 @@ const BlockComposer = ({ configuration }: { configuration: any }) => {
 					inlineToolbar: true
 				},
 				warning: Warning,
-				code: Code,
-				image: {
-					class: Image,
-					config: {
-						endpoints: {
-							byFile: "/api/image/uploadByFile",
-							byUrl: "/api/image/fetchByUrl"
-						},
-						additionalRequestData: { ...uploadImagePayload }
-					}
-				},
-				raw: Raw,
 				header: Header,
 				quote: Quote,
 				marker: Marker,
 				delimiter: Delimiter,
-				inlineCode: InlineCode,
-				embed: Embed,
-				schedule: ScheduleBlock,
-				recipeInstruction: RecipeInstructionBlock,
-				recipeIngredient: RecipeIngredientBlock,
 				singleImage: SingleImageBlock,
 				imageGallery: ImageGalleryBlock,
 				youtubeEmbed: YouTubeEmbedBlock,
