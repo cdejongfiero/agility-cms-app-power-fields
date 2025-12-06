@@ -52,6 +52,10 @@ export default class FAQBlock implements BlockTool {
   private readOnly: boolean;
   private config: FAQBlockConfig;
   private wrapper: HTMLElement | null = null;
+  
+  // Drag and drop state
+  private draggedElement: HTMLElement | null = null;
+  private dragPlaceholder: HTMLElement | null = null;
 
   static get toolbox(): ToolboxConfig {
     return {
@@ -274,8 +278,23 @@ export default class FAQBlock implements BlockTool {
     const faqWrapper = this._make('div', ['faq-block__faq-item']);
     faqWrapper.dataset.faqId = faq.id;
     
-    // FAQ header with collapse toggle and delete
+    // Make draggable if not read-only
+    if (!this.readOnly) {
+      faqWrapper.setAttribute('draggable', 'true');
+      this._attachDragListeners(faqWrapper);
+    }
+    
+    // FAQ header with drag handle, collapse toggle and delete
     const faqHeader = this._make('div', ['faq-block__faq-header']);
+    
+    // Drag handle (only if not read-only)
+    if (!this.readOnly) {
+      const dragHandle = this._make('div', ['faq-block__drag-handle'], {
+        title: 'Drag to reorder'
+      });
+      dragHandle.innerHTML = '⋮⋮';
+      faqHeader.appendChild(dragHandle);
+    }
     
     // Collapse toggle
     const collapseToggle = this._make('button', ['faq-block__collapse-toggle'], {
@@ -283,7 +302,8 @@ export default class FAQBlock implements BlockTool {
       title: 'Collapse/Expand'
     });
     collapseToggle.innerHTML = '▼';
-    collapseToggle.addEventListener('click', () => {
+    collapseToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
       const isCollapsed = faqWrapper.classList.toggle('faq-block__faq-item--collapsed');
       collapseToggle.innerHTML = isCollapsed ? '▶' : '▼';
     });
@@ -424,6 +444,123 @@ export default class FAQBlock implements BlockTool {
       </span>
     `;
     return hint;
+  }
+
+  // ===================================================================
+  // PRIVATE METHODS - DRAG AND DROP
+  // ===================================================================
+
+  private _attachDragListeners(faqElement: HTMLElement): void {
+    faqElement.addEventListener('dragstart', (e) => this._handleDragStart(e, faqElement));
+    faqElement.addEventListener('dragend', (e) => this._handleDragEnd(e, faqElement));
+    faqElement.addEventListener('dragover', (e) => this._handleDragOver(e, faqElement));
+    faqElement.addEventListener('dragenter', (e) => this._handleDragEnter(e, faqElement));
+    faqElement.addEventListener('dragleave', (e) => this._handleDragLeave(e, faqElement));
+    faqElement.addEventListener('drop', (e) => this._handleDrop(e, faqElement));
+  }
+
+  private _handleDragStart(e: DragEvent, element: HTMLElement): void {
+    this.draggedElement = element;
+    
+    // Set drag data
+    e.dataTransfer?.setData('text/plain', element.dataset.faqId || '');
+    e.dataTransfer!.effectAllowed = 'move';
+    
+    // Add dragging class after a small delay for visual feedback
+    setTimeout(() => {
+      element.classList.add('faq-block__faq-item--dragging');
+    }, 0);
+    
+    // Create placeholder
+    this.dragPlaceholder = this._make('div', ['faq-block__drag-placeholder']);
+    this.dragPlaceholder.style.height = `${element.offsetHeight}px`;
+  }
+
+  private _handleDragEnd(e: DragEvent, element: HTMLElement): void {
+    element.classList.remove('faq-block__faq-item--dragging');
+    
+    // Remove placeholder if it exists
+    if (this.dragPlaceholder && this.dragPlaceholder.parentNode) {
+      this.dragPlaceholder.parentNode.removeChild(this.dragPlaceholder);
+    }
+    
+    // Remove all drag-over classes
+    if (this.wrapper) {
+      const allItems = this.wrapper.querySelectorAll('.faq-block__faq-item');
+      allItems.forEach(item => {
+        item.classList.remove('faq-block__faq-item--drag-over');
+        item.classList.remove('faq-block__faq-item--drag-over-top');
+        item.classList.remove('faq-block__faq-item--drag-over-bottom');
+      });
+    }
+    
+    this.draggedElement = null;
+    this.dragPlaceholder = null;
+  }
+
+  private _handleDragOver(e: DragEvent, element: HTMLElement): void {
+    e.preventDefault();
+    e.dataTransfer!.dropEffect = 'move';
+    
+    if (!this.draggedElement || this.draggedElement === element) return;
+    
+    // Determine if we're in the top or bottom half of the element
+    const rect = element.getBoundingClientRect();
+    const midpoint = rect.top + rect.height / 2;
+    const isAbove = e.clientY < midpoint;
+    
+    // Update visual indicator
+    element.classList.remove('faq-block__faq-item--drag-over-top');
+    element.classList.remove('faq-block__faq-item--drag-over-bottom');
+    element.classList.add(isAbove ? 'faq-block__faq-item--drag-over-top' : 'faq-block__faq-item--drag-over-bottom');
+  }
+
+  private _handleDragEnter(e: DragEvent, element: HTMLElement): void {
+    e.preventDefault();
+    if (this.draggedElement && this.draggedElement !== element) {
+      element.classList.add('faq-block__faq-item--drag-over');
+    }
+  }
+
+  private _handleDragLeave(e: DragEvent, element: HTMLElement): void {
+    // Only remove class if we're actually leaving the element (not just entering a child)
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!element.contains(relatedTarget)) {
+      element.classList.remove('faq-block__faq-item--drag-over');
+      element.classList.remove('faq-block__faq-item--drag-over-top');
+      element.classList.remove('faq-block__faq-item--drag-over-bottom');
+    }
+  }
+
+  private _handleDrop(e: DragEvent, targetElement: HTMLElement): void {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!this.draggedElement || this.draggedElement === targetElement) return;
+    
+    const container = targetElement.parentElement;
+    if (!container) return;
+    
+    // Determine drop position based on mouse position
+    const rect = targetElement.getBoundingClientRect();
+    const midpoint = rect.top + rect.height / 2;
+    const insertBefore = e.clientY < midpoint;
+    
+    // Remove dragged element from its current position
+    this.draggedElement.remove();
+    
+    // Insert at new position
+    if (insertBefore) {
+      container.insertBefore(this.draggedElement, targetElement);
+    } else {
+      container.insertBefore(this.draggedElement, targetElement.nextSibling);
+    }
+    
+    // Update FAQ numbers
+    this._updateFAQNumbers();
+    
+    // Show notification
+    this._showNotification('FAQ reordered!', 'success');
   }
 
   // ===================================================================
