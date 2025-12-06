@@ -17,6 +17,7 @@ import SingleImageBlock from "./blocks/SingleImageBlock"
 import ImageGalleryBlock from "./blocks/ImageGalleryBlock"
 import YouTubeEmbedBlock from "./blocks/YouTubeEmbedBlock"
 import ButtonBlock from "./blocks/ButtonBlock"
+import FAQBlock from "./blocks/FAQBlock"
 import { initializeEditorSDK, cleanupEditorSDK } from "../utils/editorSDK"
 
 const BlockComposer = ({ configuration }: { configuration: any }) => {
@@ -106,7 +107,8 @@ const BlockComposer = ({ configuration }: { configuration: any }) => {
 				singleImage: SingleImageBlock,
 				imageGallery: ImageGalleryBlock,
 				youtubeEmbed: YouTubeEmbedBlock,
-				button: ButtonBlock
+				button: ButtonBlock,
+				faq: FAQBlock
 			},
 			onChange: (e: any) => {
 				editorJS.save().then((v) => {
