@@ -28,42 +28,81 @@ const makeFriendlyStr = (s: string): string => {
 };
 
 /**
- * Resolve which field to use as the slug source by inspecting the content model.
- * Strategy:
- *   1. Sort fields by ItemOrder (the order they appear in the CMS editor)
- *   2. Find the first Text/LongText field that is NOT the slug field itself
+ * Resolve the source field name for slug generation.
  *
- * This means it works automatically with "Title", "Recipe Name", "Workshop Title",
- * "Pizza Style Name", or any other first-text-field convention.
+ * Strategy (in order):
+ *   1. Use contentModel.FieldSettings if available — sort by ItemOrder,
+ *      pick the first Text/LongText field that isn't the slug field itself.
+ *   2. Fall back to inspecting contentItem.values keys — find the first key
+ *      whose value is a non-empty string and isn't the slug field.
+ *
+ * This works for "Title", "Recipe Name", "Workshop Title", "Pizza Style Name", etc.
  */
 const resolveSourceFieldName = (
-	fieldSettings: { FieldName: string; FieldType: string; ItemOrder: number; Label: string }[],
+	contentModel: any | null,
+	contentItem: any | null,
 	slugFieldName: string | undefined
 ): string | null => {
-	if (!fieldSettings || fieldSettings.length === 0) return null;
+	const slugName = (slugFieldName || "").toLowerCase();
 
-	const textFieldTypes = ["Text", "LongText"];
+	// Strategy 1: Use content model field settings (most reliable — respects field order)
+	if (contentModel?.FieldSettings?.length) {
+		const textFieldTypes = ["Text", "LongText"];
+		const sorted = [...contentModel.FieldSettings].sort(
+			(a: any, b: any) => a.ItemOrder - b.ItemOrder
+		);
+		const sourceField = sorted.find(
+			(f: any) =>
+				textFieldTypes.includes(f.FieldType) &&
+				f.FieldName.toLowerCase() !== slugName
+		);
+		if (sourceField) return sourceField.FieldName;
+	}
 
-	const sorted = [...fieldSettings].sort((a, b) => a.ItemOrder - b.ItemOrder);
+	// Strategy 2: Fall back to content item values (works even without contentModel)
+	if (contentItem?.values) {
+		const keys = Object.keys(contentItem.values);
+		for (const key of keys) {
+			if (key.toLowerCase() === slugName) continue;
+			// Skip Agility system fields
+			if (key.startsWith("_") || key === "contentID" || key === "referenceName") continue;
+			const val = contentItem.values[key];
+			// Pick the first field that looks like a title (non-empty string, not JSON/HTML)
+			if (typeof val === "string" && val.trim().length > 0 && !val.startsWith("{") && !val.startsWith("<")) {
+				return key;
+			}
+		}
+	}
 
-	const sourceField = sorted.find(
-		(f) =>
-			textFieldTypes.includes(f.FieldType) &&
-			f.FieldName.toLowerCase() !== (slugFieldName || "").toLowerCase()
-	);
+	return null;
+};
 
-	return sourceField?.FieldName || null;
+/**
+ * Get the current source field value directly from the content item.
+ * Used by Re-Generate to avoid depending on stale listener state.
+ */
+const getSourceFieldValue = async (slugFieldName: string | undefined, contentModel: any | null): Promise<string> => {
+	try {
+		const ci = await contentItemMethods?.getContentItem?.();
+		if (!ci?.values) return "";
+
+		const fieldName = resolveSourceFieldName(contentModel, ci, slugFieldName);
+		if (!fieldName) return "";
+
+		return ci.values[fieldName] || "";
+	} catch {
+		return "";
+	}
 };
 
 const SlugField = () => {
 	const { contentItem, field, fieldValue, contentModel } = useAgilityAppSDK();
 
-	const [currentTitle, setCurrentTitle] = useState<string>("");
 	const [CTAIcon, setCTAIcon] = useState<UnifiedIconName | undefined>(undefined);
 	const [CTALabel, setCTALabel] = useState<string | undefined>("Re-Generate Slug");
 	const [width, setWidth] = useState<number>(document.body.clientWidth);
 
-	// Track the resolved source field so we can clean up the listener
+	// Track the resolved source field for listener cleanup
 	const sourceFieldRef = useRef<string | null>(null);
 
 	const isNewContentItem = Boolean(contentItem && contentItem.contentID < 0);
@@ -77,28 +116,28 @@ const SlugField = () => {
 		[field?.name]
 	);
 
-	// Resolve the source field from the content model and attach a listener
+	// Resolve the source field and attach a listener for auto-generation on new items
 	useEffect(() => {
-		if (!contentModel?.FieldSettings) return;
+		// Wait until initialization data is available
+		if (!contentItem && !contentModel) return;
 
-		const sourceFieldName = resolveSourceFieldName(contentModel.FieldSettings, field?.name);
+		const sourceFieldName = resolveSourceFieldName(contentModel, contentItem, field?.name);
 
 		if (!sourceFieldName) {
 			console.warn(
-				`[SlugField] Could not find a text field to use as slug source in model "${contentModel.ReferenceName}". ` +
-					`Fields: ${contentModel.FieldSettings.map((f) => `${f.FieldName} (${f.FieldType})`).join(", ")}`
+				`[SlugField] Could not resolve a source field for slug generation.`,
+				{ contentModel: !!contentModel, contentItem: !!contentItem, slugField: field?.name }
 			);
 			return;
 		}
 
+		console.log(`[SlugField] Listening to "${sourceFieldName}" for slug auto-generation`);
 		sourceFieldRef.current = sourceFieldName;
 
 		contentItemMethods.addFieldListener({
 			fieldName: sourceFieldName,
 			onChange: (titleValue: string) => {
-				setCurrentTitle(titleValue || "");
-
-				contentItemMethods?.getContentItem()?.then((ci) => {
+				contentItemMethods?.getContentItem?.()?.then((ci) => {
 					const isNew = Boolean((ci?.contentID ?? -1) < 0);
 					if (isNew) {
 						const newVal = makeFriendlyStr(titleValue || "");
@@ -108,13 +147,12 @@ const SlugField = () => {
 			},
 		});
 
-		// Cleanup: remove the field listener on unmount
 		return () => {
 			if (sourceFieldRef.current) {
 				contentItemMethods.removeFieldListener({ fieldName: sourceFieldRef.current });
 			}
 		};
-	}, [contentModel, field?.name]);
+	}, [contentModel, contentItem, field?.name]);
 
 	// Set height and handle resize
 	useEffect(() => {
@@ -127,7 +165,7 @@ const SlugField = () => {
 		};
 	}, []);
 
-	// Update CTA button display based on save state and width
+	// Update CTA button display
 	useEffect(() => {
 		if (hasBeenSaved) {
 			setCTAIcon("RefreshIcon");
@@ -138,7 +176,7 @@ const SlugField = () => {
 		}
 	}, [hasBeenSaved, width]);
 
-	const handleCTAClick = () => {
+	const handleCTAClick = async () => {
 		if (!hasBeenSaved) return;
 
 		openAlertModal({
@@ -148,9 +186,18 @@ const SlugField = () => {
 			okButtonText: "Re-Generate",
 			cancelButtonText: "Cancel",
 			iconName: "QuestionMarkCircleIcon",
-			callback: (ok: boolean) => {
+			callback: async (ok: boolean) => {
 				if (!ok) return;
-				regenerateSlug(currentTitle);
+
+				// Fetch the source field value fresh at click time — don't rely on listener state
+				const sourceValue = await getSourceFieldValue(field?.name, contentModel);
+
+				if (!sourceValue) {
+					console.warn("[SlugField] Re-Generate: could not find source field value from content item");
+					return;
+				}
+
+				regenerateSlug(sourceValue);
 			},
 		});
 	};
